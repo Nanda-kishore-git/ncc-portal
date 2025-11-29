@@ -69,17 +69,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check for missing required YES/NO fields
-    let missingRequired = false;
-    for (const field of yesNoFields) {
-      if (field in insertData && insertData[field] === null) {
-        missingRequired = true;
-        break;
-      }
-    }
-    if (missingRequired) {
-      return NextResponse.json({ error: 'Missing required YES/NO field' }, { status: 400 });
-    }
 
     // Insert into database with specific error handling
     try {
