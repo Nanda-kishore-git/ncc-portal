@@ -6,7 +6,9 @@ import { getVisibleFields } from '../../register/fieldConfig';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => {
+      throw new Error('Invalid JSON');
+    });
     console.log('Received registration data:', body);
 
     // Check password
