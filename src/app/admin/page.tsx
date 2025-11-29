@@ -13,6 +13,7 @@ export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [data, setData] = useState<Cadet[]>([]);
   const [error, setError] = useState('');
+  const [uniformNavyHeadings, setUniformNavyHeadings] = useState(false);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
