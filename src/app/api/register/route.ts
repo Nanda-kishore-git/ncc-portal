@@ -54,7 +54,40 @@ export async function POST(req: NextRequest) {
 
     console.log('Insert data keys:', Object.keys(insertData));
 
-    await db.insert(cadets).values(insertData);
+    // Convert YES/NO fields: "Yes" → true, "No" → false, "" or empty → null
+    const yesNoFields = ['criminalCourt', 'willingMilitaryTraining', 'willingServeNcc', 'previouslyAppliedEnrollment', 'dismissedFromNccTaAf'];
+    for (const field of yesNoFields) {
+      if (field in insertData) {
+        const value = insertData[field];
+        if (value === 'Yes') {
+          insertData[field] = true;
+        } else if (value === 'No') {
+          insertData[field] = false;
+        } else {
+          insertData[field] = null;
+        }
+      }
+    }
+
+    // Check for missing required YES/NO fields
+    let missingRequired = false;
+    for (const field of yesNoFields) {
+      if (field in insertData && insertData[field] === null) {
+        missingRequired = true;
+        break;
+      }
+    }
+    if (missingRequired) {
+      return NextResponse.json({ error: 'Missing required YES/NO field' }, { status: 400 });
+    }
+
+    // Insert into database with specific error handling
+    try {
+      await db.insert(cadets).values(insertData);
+    } catch (dbError) {
+      console.error('Database insert failed:', dbError);
+      return NextResponse.json({ error: 'Database insert failed' }, { status: 500 });
+    }
 
     console.log('Cadet registered successfully');
     return NextResponse.json({ message: 'Registration successful' }, { status: 200 });
