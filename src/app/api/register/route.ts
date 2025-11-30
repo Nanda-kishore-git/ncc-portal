@@ -4,6 +4,12 @@ import { db } from '../../../db/index';
 import { cadets } from '../../../db/schema';
 import { getVisibleFields } from '../../register/fieldConfig';
 
+function toBool(value: string | undefined): boolean | null {
+  if (value === "Yes") return true;
+  if (value === "No") return false;
+  return null; // Treat as optional, no 400 error for missing/non-matching values
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => {
@@ -54,32 +60,35 @@ export async function POST(req: NextRequest) {
 
     console.log('Insert data keys:', Object.keys(insertData));
 
-    // Convert YES/NO fields: "Yes" → true, "No" → false, "" or empty → null
-    const yesNoFields = ['criminalCourt', 'willingMilitaryTraining', 'willingServeNcc', 'previouslyAppliedEnrollment', 'dismissedFromNccTaAf'];
-    for (const field of yesNoFields) {
-      if (field in insertData) {
-        const value = insertData[field];
-        if (value === 'Yes') {
-          insertData[field] = true;
-        } else if (value === 'No') {
-          insertData[field] = false;
-        } else {
-          insertData[field] = null;
-        }
+    // Apply boolean conversion using helper
+    const newCadet = {
+      ...insertData,
+      criminalCourt: toBool(body.criminalCourt),
+      willingMilitaryTraining: toBool(body.willingMilitaryTraining),
+      willingServeNcc: toBool(body.willingServeNcc),
+      previouslyAppliedEnrollment: toBool(body.previouslyAppliedEnrollment),
+      dismissedFromNccTaAf: toBool(body.dismissedFromNccTaAf),
+    };
+
+    // Validate that all required fields (not these optional ones) are present to prevent incomplete inserts
+    const requiredFields = ['cadetName', 'fatherName', 'educationQualification', 'dateOfBirth', 'gender', 'mobileNo', 'email', 'bloodGroup', 'wingType', 'category'];
+    for (const field of requiredFields) {
+      if (!newCadet[field] || newCadet[field] === '') {
+        console.error(`Missing required field: ${field}`);
+        return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 });
       }
     }
 
-
-    // Insert into database with specific error handling
+    // Wrap the DB insert with try-catch for error handling
     try {
-      await db.insert(cadets).values(insertData);
-    } catch (dbError) {
-      console.error('Database insert failed:', dbError);
-      return NextResponse.json({ error: 'Database insert failed' }, { status: 500 });
+      await db.insert(cadets).values(newCadet);
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    } catch (err: any) {
+      console.error("❌ DB Insert Failed:", err);
+      return new Response(JSON.stringify({ error: "DB insert failed", details: err.message }), {
+        status: 500,
+      });
     }
-
-    console.log('Cadet registered successfully');
-    return NextResponse.json({ message: 'Registration successful' }, { status: 200 });
   } catch (error) {
     console.error('Error registering cadet:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
