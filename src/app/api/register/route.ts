@@ -22,9 +22,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
+    // Validate category - map A/B/C to proper names if needed
+    let category = body.category;
+    if (category === 'A') category = 'Junior Wing';
+    else if (category === 'B') category = 'Senior Wing';
+    else if (category === 'C') category = 'Girl Cadet';
+
+    const validCategories = ['Junior Wing', 'Senior Wing', 'Girl Cadet'];
+    if (!category || !validCategories.includes(category)) {
+      return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
+    }
+
     // Validate mobile number
     if (body.mobileNo && (body.mobileNo.length !== 10 || !/^\d+$/.test(body.mobileNo))) {
       return NextResponse.json({ error: 'Invalid mobile number' }, { status: 400 });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (body.email && !emailRegex.test(body.email)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     // Get visible fields for the category
@@ -49,7 +66,24 @@ export async function POST(req: NextRequest) {
     for (const field of visibleFields) {
       if (field in body) {
         if (field === 'dateOfBirth') {
-          insertData[field] = new Date(body[field]);
+          const dateStr = body[field];
+          if (!dateStr) {
+            return NextResponse.json({ error: 'Missing date of birth' }, { status: 400 });
+          }
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) {
+            return NextResponse.json({ error: 'Invalid date of birth' }, { status: 400 });
+          }
+          insertData[field] = date;
+        } else if (field === 'gender') {
+          const gender = body[field];
+          if (gender === 'SD') {
+            insertData[field] = 'Male';
+          } else if (gender === 'SW') {
+            insertData[field] = 'Female';
+          } else {
+            insertData[field] = gender;
+          }
         } else {
           insertData[field] = body[field] || '';
         }
@@ -60,9 +94,24 @@ export async function POST(req: NextRequest) {
 
     console.log('Insert data keys:', Object.keys(insertData));
 
-    // Apply boolean conversion using helper
+    // Validate enum fields
+    const validGenders = ['SD', 'SW', 'Male', 'Female', 'Other'];
+    if (body.gender && !validGenders.includes(body.gender)) {
+      return NextResponse.json({ error: 'Invalid gender' }, { status: 400 });
+    }
+    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+    if (body.bloodGroup && !validBloodGroups.includes(body.bloodGroup)) {
+      return NextResponse.json({ error: 'Invalid blood group' }, { status: 400 });
+    }
+    const validWingTypes = ['Army', 'Navy', 'Air Force'];
+    if (body.wingType && !validWingTypes.includes(body.wingType)) {
+      return NextResponse.json({ error: 'Invalid wing type' }, { status: 400 });
+    }
+
+    // Apply boolean conversion and gender mapping
     const newCadet = {
       ...insertData,
+      gender: mappedGender,
       criminalCourt: toBool(body.criminalCourt),
       willingMilitaryTraining: toBool(body.willingMilitaryTraining),
       willingServeNcc: toBool(body.willingServeNcc),
