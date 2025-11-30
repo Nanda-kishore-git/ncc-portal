@@ -22,50 +22,14 @@ const dummyCadets = [
     email: 'johna@example.com',
     bloodGroup: 'O+',
     nationality: 'Indian',
-    communicationAddress: 'Address A',
-    pincode: '123456',
-    state: 'State A',
-    district: 'District A',
-    permanentAddress: 'Permanent Address A',
-    permanentPincode: '123456',
-    permanentState: 'State A',
-    permanentDistrict: 'District A',
-    BankName: 'Bank A',
-    BankBranch: 'Branch A',
-    accountNo: 'Account A',
-    IFSC: 'IFSC A',
-    aadhaar: 'Aadhaar A',
-    policeStation: 'Station A',
-    policeStationDistrict: 'District A',
-    policeStationState: 'State A',
-    // Category A specific
-    unitName: 'Unit A',
-    unitType: 'AIR',
-    regdNo: 'Regd A',
-    rank: 'JWO',
-    aColumns: 'A Column',
-    commitmentDoc: '--',
-    medicalFitnessCertNo: '--',
-    // Optional fields
+    permanentAddress: 'Address A',
+    wingType: 'Army',
+    category: 'A',
+    // Optional boolean fields
     criminalCourt: 'No',
     willingMilitaryTraining: 'Yes',
     willingServeNcc: 'Yes',
     willingToGetArrestedHd: 'No',
-    regtCamp: '--',
-    lb: '--',
-    ll: '--',
-    militaryTrainingDetails: '--',
-    medicalConditionDetails: '--',
-    g1TestResult: '--',
-    captainDetails: '--',
-    commanderPermitHolderDetails: '--',
-    nationalCampsAttendedWithDates: '--',
-    activitiesWithDates: '--',
-    awardsWithDates: '--',
-    paraTrainingDetails: '--',
-    paraAwardingDate: '--',
-    captainPermitDate: '--',
-    commanderPermitDate: '--'
   },
   // Add more cadets as needed...
 ];
@@ -73,13 +37,49 @@ const dummyCadets = [
 async function seed() {
   try {
     for (const cadet of dummyCadets) {
-      await db.insert(cadets).values({
-        ...cadet,
+      const insertData = {
+        cadetName: cadet.cadetName,
+        fatherName: cadet.fatherName,
+        motherName: cadet.motherName,
+        educationQualification: cadet.educationQualification,
+        dateOfBirth: cadet.dateOfBirth,
+        gender: cadet.gender,
+        mobileNo: cadet.mobileNo,
+        email: cadet.email,
+        bloodGroup: cadet.bloodGroup,
+        nationality: cadet.nationality,
+        permanentAddress: cadet.permanentAddress,
+        interMarksDiploma: cadet.interMarksDiploma,
+        identificationMarks: cadet.identificationMarks,
+        medicalComplaint: cadet.medicalComplaint,
+        nokName: cadet.nokName,
+        nokRelationship: cadet.nokRelationship,
+        nokContactNumber: cadet.nokContactNumber,
+        nokAddress: cadet.nokAddress,
+        extraCurricularActivity: cadet.extraCurricularActivity,
+        achievements: cadet.achievements,
+        wingType: cadet.wingType,
+        aadharNumber: cadet.aadharNumber,
+        aadharNumberFather: cadet.aadharNumberFather,
+        aadharNumberMother: cadet.aadharNumberMother,
+        bankAccount: cadet.bankAccount,
+        ifscNo: cadet.ifscNo,
+        branchName: cadet.branchName,
+        apparId: cadet.apparId,
+        category: cadet.category,
+        regimentalNo: cadet.regimentalNo,
+        campsAttendedWithDates: cadet.campsAttendedWithDates,
+        nationalCampsAttendedWithDates: cadet.nationalCampsAttendedWithDates,
+        // Convert YES/NO strings to boolean/null
         criminalCourt: toBool(cadet.criminalCourt),
         willingMilitaryTraining: toBool(cadet.willingMilitaryTraining),
         willingServeNcc: toBool(cadet.willingServeNcc),
         willingToGetArrestedHd: toBool(cadet.willingToGetArrestedHd),
-      });
+        previouslyAppliedEnrollment: toBool(cadet.previouslyAppliedEnrollment),
+        dismissedFromNccTaAf: toBool(cadet.dismissedFromNccTaAf),
+      };
+
+      await db.insert(cadets).values(insertData);
     }
     console.log('Seeding completed successfully');
   } catch (error) {
